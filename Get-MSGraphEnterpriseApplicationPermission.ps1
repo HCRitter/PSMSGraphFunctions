@@ -93,14 +93,38 @@ function Get-MSGraphEnterpriseApplicationPermission {
             # Fetch the Service Principal ID for the current enterprise application
             $ServicePrincipalID = (Invoke-MgGraphRequest -Method Get -Uri "https://graph.microsoft.com/$Endpoint/servicePrincipals?`$filter=AppID eq '$($EnterpriseApplicationObject.AppID)'" -OutputType PSObject).Value.ID
             
+            
+            # Initialize a list to store permissions
+            $Permissions = New-Object System.Collections.Generic.List[string]
+            
+            # Fetch app role assignments for the current service principal
+            (Invoke-MgGraphRequest -Method Get -Uri "https://graph.microsoft.com/$Endpoint/servicePrincipals/$ServicePrincipalID/appRoleAssignments" -OutputType PSObject).Value.AppRoleId.ForEach({
+                # Map the AppRoleId to the corresponding AppRole value
+                ($AppRoles | Where-Object Id -eq $_).Value
+            }) | ForEach-Object {
+                # Add the permission to the list if it's not null or empty
+                if (-not [string]::IsNullOrEmpty($_)) {
+                    $Permissions.Add($_)
+                }
+            }
+            
+            # Fetch OAuth2 permission grants for the current enterprise application
+            ((Invoke-MgGraphRequest -Method Get -Uri "https://graph.microsoft.com/$Endpoint/oauth2PermissionGrants" -OutputType PSObject).Value | Where-Object{
+                $_.ClientID -eq $EnterpriseApplicationObject.ID
+            }).Scope | Foreach-Object{
+                # Split the scope string into individual permissions
+                $_ -split " "
+            } | ForEach-Object{
+                # Add the permission to the list if it's not null or empty
+                if (-not [string]::IsNullOrEmpty($_)) {
+                    $Permissions.Add($_)
+                } 
+            }
             # Create a custom object with the display name, AppID, and permissions
             [PSCustomObject]@{
                 DisplayName = $EnterpriseApplicationObject.displayName
                 AppID = $EnterpriseApplicationObject.AppId
-                Permission = (Invoke-MgGraphRequest -Method Get -Uri "https://graph.microsoft.com/$Endpoint/servicePrincipals/$ServicePrincipalID/appRoleAssignments" -OutputType PSObject).Value.AppRoleId.ForEach({
-                    # Map the AppRoleId to the corresponding AppRole value
-                    ($AppRoles | Where-Object Id -eq $_).Value
-                })
+                Permission = $Permissions
             }
         }
     }
@@ -110,3 +134,4 @@ function Get-MSGraphEnterpriseApplicationPermission {
         return $Results
     }
 }
+
