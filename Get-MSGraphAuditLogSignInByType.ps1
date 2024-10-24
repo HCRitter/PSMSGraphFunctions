@@ -83,7 +83,7 @@ function Get-MSGraphAuditLogSignInByType {
             return $ReturnCollection # Returns all app objects
         }
         if($ReturnCollection.count -lt $OriginalTop){
-            return $OriginalTop = $ReturnCollection.count   
+            return $OriginalTop = $ReturnCollection 
         }
         return $ReturnCollection[0..$($OriginalTop-1)] # Returns the specified number of app objects
     }
