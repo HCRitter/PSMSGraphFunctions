@@ -89,7 +89,7 @@ function Get-ConditionalAccessSignIn {
             if($SignInTypeObject -eq 'Non-Interactive'){
                 $Filter += " and (signInEventTypes/any(t: t ne 'interactiveUser'))"
             }else {
-                $Filter += " and (signInEventTypes/any(t: t eq 'interactiveUser')"
+                $Filter += " and (signInEventTypes/any(t: t eq 'interactiveUser'))"
             }
             
 
