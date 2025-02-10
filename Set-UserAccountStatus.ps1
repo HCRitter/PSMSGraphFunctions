@@ -1,7 +1,13 @@
-if (-not (Get-MgContext) -or -not (Get-MgContext).Scopes -contains "User.Read.All" -or -not (Get-MgContext).Scopes -contains "User.EnableDisableAccount.All") {
-    Connect-MgGraph -Scopes "User.Read.All","User.EnableDisableAccount.All"
+try {
+    $MgContext = Get-MgContext
+    if ( -not ($MgContext) -or -not ($MgContext.Scopes -contains "User.Read.All") -or -not ($MgContext.Scopes -contains "User.EnableDisableAccount.All") ) {
+        Connect-MgGraph -Scopes "User.Read.All","User.EnableDisableAccount.All"
+    }
+} catch {
+    # Show the error and stop the script if unable to connect to the Microsoft Graph with the required scopes.
+    Write-Error "Failed to connect to Microsoft Graph with the required scopes 'User.Read.All' and 'User.EnableDisableAccount.All'."
+    throw $_
 }
-
 
 function Set-UserAccountStatus {
     [CmdletBinding()]
@@ -53,8 +59,22 @@ function Set-UserAccountStatus {
 }
 
 function Get-AllUserAccounts {
+    [CmdletBinding()]
+    param (
 
-    #Connect-MgGraph -Scopes "User.Read.All","User.EnableDisableAccount.All"
+    )
+
+    # Connect to the Microsoft Graph if not already connected.
+    try {
+        $MgContext = Get-MgContext
+        if ( -not ($MgContext) -or -not ($MgContext.Scopes -contains "User.Read.All") -or -not ($MgContext.Scopes -contains "User.EnableDisableAccount.All") ) {
+            Connect-MgGraph -Scopes "User.Read.All","User.EnableDisableAccount.All"
+        }
+    } catch {
+        # Show the error and stop the script if unable to connect to the Microsoft Graph with the required scopes.
+        Write-Error "Failed to connect to Microsoft Graph with the required scopes 'User.Read.All' and 'User.EnableDisableAccount.All'."
+        throw $_
+    }
 
     # Get all user accounts from Microsoft Graph
     $userAccounts = @()
